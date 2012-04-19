@@ -1,0 +1,129 @@
+extends base
+
+block content
+	if not datastore_reads.is_enabled()
+		div.row
+			div.span12
+				div.alert Our database is temporarily offline.
+	else
+		if not datastore_writes.is_enabled()
+			div.row
+				div.span12
+					div.alert Our database is temporarily read-only.
+	div.row
+		div.span12.ad-container(style="margin-bottom:10px")
+			img(src="/static/#{version_id}/img/ad1.gif", width="728", height="90", alt="Ad here")
+	div.row
+		div.post-container.span12
+			form.post-form.form-horizontal(method="POST", action=upload_url, enctype="multipart/form-data")
+				input(type="hidden", name="MAX_FILE_SIZE", value=max_file_size)
+				each error in post_errors
+					div.alert.alert-error= error
+				fieldset
+					legend New thread
+					div.control-group
+						label.control-label(for="poster-name") Name
+						div.controls
+							if user
+								input.input-xlarge.disabled#poster-name(type="text", name="poster-name", disabled, value=user.nickname())
+								label.checkbox Post as Anonymous
+									input(type="checkbox", name="post-as-anonymous")
+								if user_is_admin
+									label.checkbox Post as admin
+										input(type="checkbox", name="post-as-admin", checked)
+							else
+								input.input-xlarge#poster-name(type="text", name="poster-name")
+							p.help-block The name to show on the post. It can include tripcodes. If left blank, it will be Anonymous.
+					div.control-group
+						label.control-label(for="poster-email") E-mail
+						div.controls
+							if user
+								input.input-xlarge.disabled#poster-name(type="text", name="poster-email", disabled, value=user.email())
+								label.checkbox Include email
+									input#dont-post-email(type="checkbox", name="post-include-email", checked)
+							else
+								input.input-xlarge#poster-email(type="text", name="poster-email")
+					div.control-group
+						label.control-label(for="post-subject") Subject
+						div.controls
+							input.input-xlarge#post-subject(type="text", name="post-subject")
+					div.control-group
+						label.control-label(for="post-comment") Comment
+						div.controls
+							textarea.input-xlarge#post-comment(name="post-comment", rows="3", required)
+					div.control-group
+						label.control-label(for="post-image") Image
+						div.controls
+							input.input-file#post-image(type="file", name="post-image", accept="image/*", required)
+							p.help-block Maximum file size is #{max_file_size_human}.
+					div.control-group
+						label.control-label(for="post-password") Password
+						div.controls
+							if user
+								span.input-xlarge.uneditable-input Your post is associated with your account.
+							else
+								input.input-xlarge#post-password(type="password", name="post-password")
+							p.help-block This password is used to allow you to delete your post and/or its image.
+					div.form-actions
+						if datastore_writes.is_enabled()
+							button.btn.btn-primary(type="submit") Post
+						else
+							button.btn.btn-primary(type="submit", disabled) Post
+						|&nbsp;
+						button.btn(type="reset") Cancel
+	div.row
+		div.span12.ad-container(style="margin-top:-10px;margin-bottom:10px")
+			img(src="/static/#{version_id}/img/ad2.gif", width="728", height="90", alt="Ad here")
+
+	each thread, main_post in threads
+		hr
+		div.row
+			div.span2
+				a.thumbnail(href="#{main_post.image_url}")
+					img(src="#{main_post.image_url}=s120", alt="Thread image", title="#{main_post.image_width}x#{main_post.image_height}")
+			div.span9
+				if main_post.subject
+					span.post-subject= main_post.subject
+				if main_post.capcode:
+					span.user-info(data-capcode=main_post.capcode.lower())
+						if main_post.email
+							a(href="mailto:#{main_post.email}")
+								span.username= main_post.username
+						else
+							span.username= main_post.username
+						span.capcode= main_post.capcode
+				else
+					span.user-info
+						if main_post.email
+							a(href="mailto:#{main_post.email}")
+								span.username= main_post.username
+						else
+							span.username= main_post.username
+				div.thread-toolbar.btn-toolbar
+					div.btn-group
+						a.reply-btn.btn.btn-mini(href="/thread/#{thread.key.id()}")
+							i.icon-comment
+							|&nbsp;Reply
+					if user_is_admin
+						div.btn-group(id="admin-menu-#{thread.key.id()}")
+							a.btn.btn-mini.btn-primary.dropdown-toggle(data-toggle="dropdown", href="#admin-menu-#{thread.key.id()}")
+								i.icon-user.icon-white
+								|&nbsp;Admin
+								b.caret
+							ul.dropdown-menu
+								li
+									a(href="/admin/thread/#{thread.key.id()}/delete")
+										i.icon-trash
+										|&nbsp;Delete
+								li
+									a(href="/admin/thread/#{thread.key.id()}/ban")
+										i.icon-ban-circle
+										|&nbsp;Ban
+								li
+									a(href="/admin/thread/#{thread.key.id()}/bandelete")
+										i.icon-exclamation-sign
+										|&nbsp;Ban &amp; delete
+								li.divider
+								li
+									a IP address: #{main_post.ip_string}
+				p.well!= main_post.comment

@@ -1,0 +1,63 @@
+application: bro-chan
+version: production
+runtime: python27
+api_version: 1
+threadsafe: true
+
+default_expiration: "30d"
+
+skip_files: |
+ ^(.*/)?(
+ (app\.yaml)|
+ (app\.yml)|
+ (index\.yaml)|
+ (index\.yml)|
+ (#.*#)|
+ (.*~)|
+ (.*\.py[co])|
+ (.*/RCS/.*)|
+ (\..*)|
+ (.*/\.git/.*)|
+ (chan\.iml)|
+ (\.idea/.*)|
+ )$
+
+libraries:
+- name: jinja2
+  version: latest
+
+handlers:
+- url: /mu-33d99d09-c5e7d5d8-e04c7629-3b3e7f5f
+  static_files: static/blitz-auth.txt
+  upload: static/blitz-auth\.txt
+
+- url: /favicon\.ico
+  static_files: static/favicon.ico
+  upload: static/favicon\.ico
+
+- url: /static/.+/css/([^/].*)\.css
+  static_files: static/css/\1.css
+  upload: static/css/([^/].*)\.css
+
+- url: /static/.+/img/([^/].*)
+  static_files: static/img/\1
+  upload: static/img/([^/].*)
+
+- url: /static/.+/js/([^/].*)
+  static_files: static/js/\1
+  upload: static/js/([^/].*)
+
+- url: /ip
+  script: main.app
+
+- url: /login
+  script: main.app
+
+- url: /logout
+  script: main.app
+
+- url: /new-thread
+  script: main.app
+
+- url: /
+  script: main.app

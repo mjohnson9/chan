@@ -1,0 +1,55 @@
+.logo-container {
+	text-align: center;
+	margin-bottom: 10px;
+}
+
+.ad-container {
+	text-align: center;
+}
+
+
+
+
+.user-info > * {
+	color: #117743;
+	font-weight: bold;
+}
+
+.user-info[data-capcode="admin"] > * {
+	color: #FF4F4F;
+}
+
+
+.post-subject {
+	margin-right: 5px;
+	color: red;
+	font-weight: bold;
+}
+
+
+.capcode {
+	margin-left: 5px;
+}
+
+.capcode:before {
+	content: "## ";
+}
+
+
+.reply-link {
+	margin-left: 5px;
+}
+
+.reply-link:before {
+	content: "[";
+}
+
+.reply-link:after {
+	content: "]";
+}
+
+
+.thread-toolbar {
+	display: inline-block;
+	margin-left: 5px;
+}
