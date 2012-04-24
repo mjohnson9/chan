@@ -14,12 +14,13 @@ def flatten(l, ltypes=(list, tuple)):
         i += 1
     return ltype(l)
 
-def attrs (attrs=[],terse=False):
+def attrs(attrs=None, terse=False):
+    if not attrs: attrs = []
     buf = []
     if bool(attrs):
         buf.append('')
         for k,v in attrs:
-            if v!=None and (v!=False or type(v)!=bool):
+            if v is not None and (v!=False or type(v)!=bool):
                 if k=='class' and isinstance(v, (list, tuple)):
                     v = ' '.join(map(str,flatten(v)))
                 t = v==True and type(v)==bool

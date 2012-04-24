@@ -1,0 +1,22 @@
+{% macro post_form(user, is_admin, form_title="New post", upload_url=None) %}
+	<form class="post-form form-horizontal" method="POST" action="{{ upload_url }}" enctype="multipart/form-data">
+		<a id="post"></a>
+		<input type="hidden" name="MAX_FILE_SIZE" value="{{ max_file_size }}"/>
+		{% for error in errors %}
+			<div class="alert alert-error">{{ error }}</div>
+		{% endfor %}
+		<fieldset>
+			<legend>{{ form_title }}</legend>
+			<div class="control-group">
+				<label class="control-label" for="poster-name">Name</label>
+				<div class="controls">
+					{% if user %}
+						<input type="text" class="input-xlarge disabled" id="poster-name" name="poster-name" disabled="disabled" value="{{ user.nickname() }}"/>
+					{% else %}
+						<input type="text" class="input-xlarge" id="poster-name" name="poster-name" value="{{ name }}"/>
+					{% endif %}
+				</div>
+			</div>
+		</fieldset>
+	</form>
+{%- endmacro %}

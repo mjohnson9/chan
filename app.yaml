@@ -26,29 +26,26 @@ libraries:
 - name: jinja2
   version: latest
 
-handlers:
-- url: /mu-33d99d09-c5e7d5d8-e04c7629-3b3e7f5f
-  static_files: static/blitz-auth.txt
-  upload: static/blitz-auth\.txt
+builtins:
+- deferred: on
+- appstats: on
 
+handlers:
 - url: /favicon\.ico
   static_files: static/favicon.ico
   upload: static/favicon\.ico
 
-- url: /static/.+/css/([^/].*)\.css
+- url: /static/\d+/css/([^/].*)\.css
   static_files: static/css/\1.css
   upload: static/css/([^/].*)\.css
 
-- url: /static/.+/img/([^/].*)
+- url: /static/\d+/img/([^/].*)
   static_files: static/img/\1
   upload: static/img/([^/].*)
 
-- url: /static/.+/js/([^/].*)
+- url: /static/\d+/js/([^/].*)
   static_files: static/js/\1
   upload: static/js/([^/].*)
-
-- url: /ip
-  script: main.app
 
 - url: /login
   script: main.app
@@ -56,8 +53,36 @@ handlers:
 - url: /logout
   script: main.app
 
-- url: /new-thread
+- url: /new-thread/.+
   script: main.app
+
+- url: /post/\d+
+  script: main.app
+
+- url: /post/\d+/reply/.+
+  script: main.app
+
+- url: /image/\d+
+  script: main.app
+
+- url: /admin/post/\d+/ban(delete)?
+  script: main.app
+
+- url: /admin/ban
+  script: main.app
+
+- url: /tasks/expire
+  script: main.app
+  login: admin
 
 - url: /
   script: main.app
+
+- url: /mapreduce(/.*)?
+  script: mapreduce.main.APP
+  login: admin
+
+- url: /.*
+  static_files: static/404.html
+  upload: static/404\.html
+  expiration: "0s"

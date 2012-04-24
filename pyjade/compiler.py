@@ -90,7 +90,7 @@ class Compiler(object):
             self.buf[self.lastBufferedIdx-1] = self.lastBuffered
         else:
             self.buf.append(str)
-            self.lastBuffered = str;
+            self.lastBuffered = str
             self.lastBufferedIdx = len(self.buf)
 
     def visit(self,node):
@@ -196,17 +196,17 @@ class Compiler(object):
 
     def visitComment(self,comment):
         if not comment.buffer: return
-        if self.pp: self.buffer('\n'+'  '*(self.indents))
+        if self.pp: self.buffer('\n'+'  '* self.indents)
         self.buffer('<!--%s-->'%comment.val)
 
     def visitAssignment(self,assignment):
         self.buffer('{%% set %s = %s %%}'%(assignment.name,assignment.val))
 
     def visitExtends(self,node):
-        self.buffer('{%% extends "%s" %%}'%(node.path))
+        self.buffer('{%% extends "%s" %%}'% node.path)
 
     def visitInclude(self,node):
-        self.buffer('{%% include "%s" %%}'%(node.path))
+        self.buffer('{%% include "%s" %%}'% node.path)
 
     def visitBlockComment(self,comment):
         if not comment.buffer: return

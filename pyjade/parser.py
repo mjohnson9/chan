@@ -15,7 +15,7 @@ class Parser(object):
         self.extending = False
         self._spaces = None
     
-    def context(self,parser):
+    def context(self,parser=None):
         if parser: self.context.append(parser)
         else: self.contexts.pop()
 
@@ -39,7 +39,6 @@ class Parser(object):
 
     def parse (self):
         block = nodes.Block()
-        parser = None
         block.line = self.line()
 
         while 'eos' != self.peek().type:

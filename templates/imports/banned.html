@@ -1,0 +1,7 @@
+{% macro banned_message(reason) %}
+	<div class="alert alert-error">
+		You have been banned. The reason listed is:
+		<div class="ban-reason">{{ user_ban_reason }}</div>
+		While banned you may view posts but not post. You may <strong>NOT</strong> appeal a ban.
+	</div>
+{%- endmacro %}

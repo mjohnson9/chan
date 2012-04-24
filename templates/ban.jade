@@ -1,0 +1,35 @@
+extends base
+
+block content
+	div.row
+		div.post-container.span12
+			form.post-form.form-horizontal(method="POST", action=action_url, enctype="multipart/form-data")
+				each error in errors
+					div.alert.alert-error= error
+				if success
+					div.alert.alert-success Ban successful.
+				fieldset
+					legend Ban IP
+					div.control-group
+						label.control-label(for="banee-ip") IP
+						div.controls
+							input.input-xlarge#banee-ip(type="text", name="banee-ip", pattern="^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", value=ban_ip, required)
+							p.help-block The IP to ban.
+					div.control-group
+						label.control-label(for="ban-reason") Reason
+						div.controls
+							input.input-xlarge#ban-reason(type="text", name="ban-reason", value=reason, required)
+							p.help-block This is the ban's reason. It will be shown to the user and other administrators.
+					div.form-actions
+						if db_writes_enabled
+							if delete
+								button.btn.btn-primary(type="submit") Ban &amp; delete
+							else
+								button.btn.btn-primary(type="submit") Ban
+						else
+							if delete
+								button.btn.btn-primary(type="submit", disabled) Ban &amp; delete
+							else
+								button.btn.btn-primary(type="submit", disabled) Ban
+						|&nbsp;
+						button.btn(type="reset") Cancel

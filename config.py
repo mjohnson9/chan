@@ -1,6 +1,8 @@
 import os
+from datetime import timedelta
+
 import jinja2
-from google.appengine.ext import db
+from google.appengine.ext import db, ndb
 
 def humanize_bytes(bytes, precision=1): # It's kind of dumb, but I couldn't put this in utils.py because it would cause a circular dependency
 	abbrevs = (
@@ -18,7 +20,21 @@ def humanize_bytes(bytes, precision=1): # It's kind of dumb, but I couldn't put 
 			break
 	return '%.*f %s' % (precision, bytes / factor, suffix)
 
+UPLOAD_KEY_EXPIRATION = timedelta(minutes=15)
+
 VERSION_ID = os.environ["CURRENT_VERSION_ID"].split('.')[1]
+
+TRUSTED_FORWARDERS_STR = """204.93.240.0/24
+204.93.177.0/24
+199.27.128.0/21
+173.245.48.0/20
+103.22.200.0/22
+141.101.64.0/18
+108.162.192.0/18
+190.93.240.0/20
+2400:cb00::/32
+2606:4700::/32
+2803:f800::/32"""
 
 MAX_FILE_SIZE_BYTES = 6815744
 
@@ -26,7 +42,10 @@ MAX_FILE_SIZE_STRING = humanize_bytes(float(MAX_FILE_SIZE_BYTES))
 
 COUNTER_SHARDS = 20
 
-GLOBAL_VARS = {'version_id': VERSION_ID, 'max_file_size': MAX_FILE_SIZE_BYTES, 'max_file_size_human': MAX_FILE_SIZE_STRING, 'datastore_reads': db.READ_CAPABILITY, 'datastore_writes': db.WRITE_CAPABILITY}
+DB_READ_CAPABILITY = db.READ_CAPABILITY
+DB_WRITE_CAPABILITY = db.WRITE_CAPABILITY
+
+GLOBAL_VARS = {'version_id': VERSION_ID, 'max_file_size': MAX_FILE_SIZE_BYTES, 'max_file_size_human': MAX_FILE_SIZE_STRING, 'datastore_reads': DB_READ_CAPABILITY, 'datastore_writes': DB_WRITE_CAPABILITY}
 
 DEV_SERVER = os.environ['SERVER_SOFTWARE'].startswith('Development')
 

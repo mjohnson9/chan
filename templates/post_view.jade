@@ -13,12 +13,12 @@ block content
 					|While banned you may view posts, but not post. You may not appeal bans.
 			else
 				form.post-form.form-horizontal(method="POST", action=upload_url, enctype="multipart/form-data")
-					a#new-thread(name="new-thread")
+					a#reply(name="reply")
 					input(type="hidden", name="MAX_FILE_SIZE", value=max_file_size)
 					each error in post_errors
 						div.alert.alert-error= error
 					fieldset
-						legend New thread
+						legend Reply to thread
 						div.control-group
 							label.control-label(for="poster-name") Name
 							div.controls
@@ -41,6 +41,8 @@ block content
 										input#dont-post-email(type="checkbox", name="post-include-email", checked)
 								else
 									input.input-xlarge#poster-email(type="text", name="poster-email")
+								label.checkbox Don't bump
+									input#dont-bump(type="checkbox", name="dont-bump")
 						div.control-group
 							label.control-label(for="post-subject") Subject
 							div.controls
@@ -48,11 +50,11 @@ block content
 						div.control-group
 							label.control-label(for="post-comment") Comment
 							div.controls
-								textarea.input-xlarge#post-comment(name="post-comment", rows="3", required)
+								textarea.input-xlarge#post-comment(name="post-comment", rows="3")= comment
 						div.control-group
 							label.control-label(for="post-image") Image
 							div.controls
-								input.input-file#post-image(type="file", name="post-image", accept="image/*", required)
+								input.input-file#post-image(type="file", name="post-image", accept="image/*")
 								p.help-block Maximum file size is #{max_file_size_human}.
 						div.control-group
 							label.control-label(for="post-password") Password
@@ -74,59 +76,117 @@ block content
 			script(type="text/javascript") google_ad_client="ca-pub-5045023404782237";google_ad_slot="4134954748";google_ad_width=728;google_ad_height=90;
 			script(type="text/javascript", src="https://pagead2.googlesyndication.com/pagead/show_ads.js")
 
-	each main_post in threads
-		hr
-		div.row
-			div.span2
-				a.thumbnail(href="/image/#{main_post.key.id()}")
-					img(src="#{main_post.image_url}=s120", alt="Thread image", title="#{main_post.image_width}x#{main_post.image_height}")
-			div.span9
-				if main_post.subject
-					span.post-subject= main_post.subject
-				if main_post.capcode:
-					span.user-info(data-capcode=main_post.capcode.lower())
-						if main_post.email
-							a(href="mailto:#{main_post.email}")
-								span.username= main_post.username
-						else
+	hr
+	div.row
+		a(id="#{main_post.key.id()}", name="#{main_post.key.id()}")
+		div.span2
+			a.thumbnail(href="/image/#{main_post.key.id()}")
+				img(src="#{main_post.image_url}=s120", alt="Thread image", title="#{main_post.image_width}x#{main_post.image_height}")
+		div.span9
+			if main_post.subject
+				span.post-subject= main_post.subject
+			if main_post.capcode:
+				span.user-info(data-capcode=main_post.capcode.lower())
+					if main_post.email
+						a(href="mailto:#{main_post.email}")
 							span.username= main_post.username
-						span.capcode= main_post.capcode
+					else
+						span.username= main_post.username
+					span.capcode= main_post.capcode
+			else
+				span.user-info
+					if main_post.email
+						a(href="mailto:#{main_post.email}")
+							span.username= main_post.username
+					else
+						span.username= main_post.username
+			span.posted= main_post.posted_string
+			span.post-number= main_post.key.id()
+			div.thread-toolbar.btn-toolbar
+				div.btn-group
+					a.reply-btn.btn.btn-mini(href="/post/#{main_post.key.id()}?comment=>>#{main_post.key.id()}#reply")
+						i.icon-comment
+						|&nbsp;Reply
+					a.btn.btn-mini(href="/post/#{main_post.key.id()}##{main_post.key.id()}") Permalink
+				if user_is_admin
+					div.btn-group(id="admin-menu-#{main_post.key.id()}")
+						a.btn.btn-mini.dropdown-toggle(data-toggle="dropdown", href="#admin-menu-#{main_post.key.id()}")
+							i.icon-user
+							|&nbsp;Admin
+							b.caret
+						ul.dropdown-menu
+							li
+								a(href="/admin/post/#{main_post.key.id()}/delete")
+									i.icon-trash
+									|&nbsp;Delete
+							li
+								a(href="/admin/post/#{main_post.key.id()}/ban")
+									i.icon-ban-circle
+									|&nbsp;Ban
+							li
+								a(href="/admin/post/#{main_post.key.id()}/bandelete")
+									i.icon-exclamation-sign
+									|&nbsp;Ban &amp; delete
+							li.divider
+							li
+								a IP address: #{main_post.ip_string}
+			p.well!= main_post.comment
+
+	each post in child_posts
+		hr
+		div.row.thread-reply
+			a(id="#{post.key.id()}", name="#{post.key.id()}")
+			if post.image_url
+				div.span2
+					a.thumbnail(href="/image/#{post.key.id()}")
+						img(src="#{post.image_url}=s120", alt="Post image", title="#{post.image_width}x#{post.image_height}")
+			div.span9
+				if post.subject
+					span.post-subject= main_post.subject
+				if post.capcode:
+					span.user-info(data-capcode=post.capcode.lower())
+						if post.email
+							a(href="mailto:#{post.email}")
+								span.username= post.username
+						else
+							span.username= post.username
+						span.capcode= post.capcode
 				else
 					span.user-info
-						if main_post.email
-							a(href="mailto:#{main_post.email}")
-								span.username= main_post.username
+						if post.email
+							a(href="mailto:#{post.email}")
+								span.username= post.username
 						else
-							span.username= main_post.username
-				span.posted= main_post.posted_string
-				span.post-number= main_post.key.id()
+							span.username= post.username
+				span.posted= post.posted_string
+				span.post-number= post.key.id()
 				div.thread-toolbar.btn-toolbar
 					div.btn-group
-						a.reply-btn.btn.btn-mini(href="/post/#{main_post.key.id()}?comment=>>#{main_post.key.id()}#reply")
+						a.reply-btn.btn.btn-mini(href="/post/#{main_post.key.id()}?comment=>>#{post.key.id()}#reply")
 							i.icon-comment
 							|&nbsp;Reply
-						a.btn.btn-mini(href="/post/#{main_post.key.id()}##{main_post.key.id()}") Permalink
+						a.btn.btn-mini(href="/post/#{main_post.key.id()}##{post.key.id()}") Permalink
 					if user_is_admin
-						div.btn-group(id="admin-menu-#{main_post.key.id()}")
-							a.btn.btn-mini.dropdown-toggle(data-toggle="dropdown", href="#admin-menu-#{main_post.key.id()}")
+						div.btn-group(id="admin-menu-#{post.key.id()}")
+							a.btn.btn-mini.dropdown-toggle(data-toggle="dropdown", href="#admin-menu-#{post.key.id()}")
 								i.icon-user
 								|&nbsp;Admin
 								b.caret
 							ul.dropdown-menu
 								li
-									a(href="/admin/post/#{main_post.key.id()}/delete")
+									a(href="/admin/post/#{post.key.id()}/delete")
 										i.icon-trash
 										|&nbsp;Delete
 								li
-									a(href="/admin/post/#{main_post.key.id()}/ban")
+									a(href="/admin/post/#{post.key.id()}/ban")
 										i.icon-ban-circle
 										|&nbsp;Ban
 								li
-									a(href="/admin/post/#{main_post.key.id()}/bandelete")
+									a(href="/admin/post/#{post.key.id()}/bandelete")
 										i.icon-exclamation-sign
 										|&nbsp;Ban &amp; delete
 								li.divider
 								li
-									a IP address: #{main_post.ip_string}
-				p.well!= main_post.comment
-				p All replies are omitted. Click reply to view.
+									a IP address: #{post.ip_string}
+				if post.comment
+					p.well!= post.comment

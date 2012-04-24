@@ -1,0 +1,1 @@
+Obscure error #1: Attempted to directly post to the new thread or new post forms

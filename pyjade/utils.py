@@ -199,7 +199,7 @@ class odict(dict):
 
     def byindex(self, item):
         key = self._keys[item]
-        return (key, dict.__getitem__(self, key))
+        return key, dict.__getitem__(self, key)
 
     def reverse(self):
         self._keys.reverse()

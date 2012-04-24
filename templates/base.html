@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>chan</title>
+		<link rel="stylesheet" href="/static/{{ version_id }}/css/bootstrap.css"/>
+		<link rel="stylesheet" href="/static/{{ version_id }}/css/bootstrap-responsive.css"/>
+		<link rel="stylesheet" href="/static/{{ version_id }}/css/chan.css"/>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
+		<script type="text/javascript" src="/static/{{ version_id }}/js/bootstrap.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			{% block content_head %}
+				<div class="navbar navbar-fixed-top">
+					<div class="navbar-inner">
+						<div class="container">
+							<a class="brand">chan</a>
+							<ul class="nav">
+								<li><a href="/">Home</a></li>
+							</ul>
+
+							<ul class="nav pull-right">
+								{% if user_is_admin %}
+
+							</ul>
+						</div>
+					</div>
+				</div>
+			{% endblock %}
+			{% block content %}
+
+			{% endblock %}
+			{% block content_foot %}{% endblock %}
+		</div>
+	</body>
+</html>

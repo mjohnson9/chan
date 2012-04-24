@@ -16,7 +16,7 @@ def regexec (regex, input):
 
 class Lexer(object):
     RE_INPUT = re.compile(r'\r\n|\r')
-    RE_COMMENT = re.compile(r'^ *\/\/(-)?([^\n]*)')
+    RE_COMMENT = re.compile(r'^ *//(-)?([^\n]*)')
     RE_TAG = re.compile(r'^(\w[-:\w]*)')
     RE_FILTER = re.compile(r'^:(\w+)')
     RE_DOCTYPE = re.compile(r'^(?:!!!|doctype) *([^\n]+)?')
@@ -243,7 +243,7 @@ class Lexer(object):
             index = self.indexOfDelimiters('(',')')
             str = self.input[1:index]
             tok = self.tok('attrs')
-            l = len(str)
+            #l = len(str)
             colons = self.colons
             states = ['key']
             class Namespace:

@@ -24,10 +24,10 @@ class Compiler(_Compiler):
         self.buffer('{%% set %s = %s %%}'%(assignment.name,assignment.val))
 
     def visitExtends(self,node):
-        self.buffer('{%% extends "%s" %%}'%(node.path))
+        self.buffer('{%% extends "%s" %%}'% node.path)
 
     def visitInclude(self,node):
-        self.buffer('{%% include "%s" %%}'%(node.path))
+        self.buffer('{%% include "%s" %%}'% node.path)
 
     def visitCode(self,code):
         if code.buffer:
