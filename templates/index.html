@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% from "imports/post.html" import post with context %}
+{% from "imports/forms.html" import post_form with context %}
+{% from "imports/banned.html" import banned_message with context %}
+
+{% block content %}
+	{% if user_is_banned %}
+		{{ banned_message() }}
+	{% else %}
+		{{ post_form(allow_dont_bump=False, comment_required=True, image_required=True, form_title="New thread") }}
+	{% endif %}
+	{% for thread in threads %}
+		{% if not loop.first %}<hr/>{% endif %}
+		{{ post(post=thread, omitted=True) }}
+	{% endfor %}
+{% endblock %}

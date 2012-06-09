@@ -5,6 +5,7 @@ from webapp2 import cached_property
 from google.appengine.ext import ndb
 from google.appengine.api import memcache
 
+import ipaddr
 import utils
 import config
 
@@ -168,7 +169,7 @@ class Post(ndb.Model):
 
 	@cached_property
 	def ip_string(self):
-		return utils.num_to_dotted_quad(self.ip)
+		return str(ipaddr.IPAddress(self.ip))
 
 	@property
 	def posted_string(self):

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% from "imports/post.html" import post with context %}
+{% from "imports/forms.html" import post_form with context %}
+{% from "imports/banned.html" import banned_message with context %}
+
+{% block content %}
+	{% if user_is_banned %}
+		{{ banned_message() }}
+	{% else %}
+		{{ post_form(form_title="Reply") }}
+	{% endif %}
+	{{ post(post=main_post) }}
+	{% for this_post in child_posts %}
+		<hr/>
+		{{ post(post=this_post) }}
+	{% endfor %}
+{% endblock %}

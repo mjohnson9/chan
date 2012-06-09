@@ -1,0 +1,77 @@
+{% macro post_form(allow_dont_bump=True, comment_required=False, image_required=False, form_title="New post") %}
+	<form class="post-form form-horizontal" method="POST" action="{{ upload_url }}" enctype="multipart/form-data">
+		<a id="post"></a>
+		<input type="hidden" name="MAX_FILE_SIZE" value="{{ max_file_size }}"/>
+		{% for error in post_errors %}
+			<div class="alert alert-error">{{ error }}</div>
+		{% endfor %}
+		<fieldset>
+			<legend>{{ form_title }}</legend>
+			<div class="control-group">
+				<label class="control-label" for="poster-name">Name</label>
+				<div class="controls">
+					<input type="text" class="input-xlarge" id="poster-name" name="poster-name"{% if user %} disabled="disabled" value="{{ user.nickname() }}"{% else %} placeholder="Anonymous"{% endif %} />
+					<p class="help-block">The name to show on the post. If left blank, it will be Anonymous. Secure tripcodes will not work. Instead, you may use the login button in the upper-right.</p>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label">Post as</label>
+				<div class="controls">
+					<label class="radio">
+						<input type="radio" name="post-as" id="post-as-anonymous" value="anonymous"{% if not user %} checked="checked"{% endif %} />
+						Post as Anonymous
+					</label>
+					{% if user %}
+						<label class="radio">
+							<input type="radio" name="post-as" id="post-as-user" value="user" checked="checked" />
+							Post as a logged in user
+						</label>
+					{% endif %}
+					{% if user_is_admin %}
+						<label class="radio">
+							<input type="radio" name="post-as" id="post-as-admin" value="admin" />
+							Post as an administrator
+						</label>
+					{% endif %}
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="poster-email">Email</label>
+				<div class="controls">
+					<input type="text" class="input-xlarge" id="poster-email" name="poster-email"{% if user %} disabled="disabled" value="{{ user.email() }}"{% endif %}>
+					{% if user %}
+						<label class="checkbox">Include email <input type="checkbox" id="post-include-email" name="post-include-email" /></label>
+					{% endif %}
+					{% if allow_dont_bump %}
+						<label class="checkbox">Don't bump <input type="checkbox" id="dont-bump" name="dont-bump" /></label>
+					{% endif %}
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="post-subject">Subject</label>
+				<div class="controls">
+					<input type="text" class="input-xlarge" id="post-subject" name="post-subject" />
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="post-comment">Comment</label>
+				<div class="controls">
+					<textarea class="input-xlarge" rows="3" id="post-comment" name="post-comment"{% if comment_required %} required="required"{% endif %}>{{ comment }}</textarea>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="post-image">Image</label>
+				<div class="controls">
+					<input type="file" class="input-xlarge" id="post-image" accept="image/*" name="post-image"{% if image_required %} required="required"{% endif %} />
+					<p class="help-block">
+						Maximum file size is {{ max_file_size_human }}.
+					</p>
+				</div>
+			</div>
+			<div class="form-actions">
+				<button type="submit" class="btn btn-primary"{% if not db_writes_enabled %} disabled="disabled"{% endif %}>Post</button>
+				<button type="reset" class="btn">Cancel</button>
+			</div>
+		</fieldset>
+	</form>
+{%- endmacro %}

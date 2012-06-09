@@ -1,8 +1,8 @@
 import os
 from datetime import timedelta
 
+from google.appengine.api import capabilities
 import jinja2
-from google.appengine.ext import db, ndb
 
 def humanize_bytes(bytes, precision=1): # It's kind of dumb, but I couldn't put this in utils.py because it would cause a circular dependency
 	abbrevs = (
@@ -42,10 +42,10 @@ MAX_FILE_SIZE_STRING = humanize_bytes(float(MAX_FILE_SIZE_BYTES))
 
 COUNTER_SHARDS = 20
 
-DB_READ_CAPABILITY = db.READ_CAPABILITY
-DB_WRITE_CAPABILITY = db.WRITE_CAPABILITY
+DB_READ_CAPABILITY = capabilities.CapabilitySet('datastore_v3')
+DB_WRITE_CAPABILITY = capabilities.CapabilitySet('datastore_v3', capabilities=['write'])
 
-GLOBAL_VARS = {'version_id': VERSION_ID, 'max_file_size': MAX_FILE_SIZE_BYTES, 'max_file_size_human': MAX_FILE_SIZE_STRING, 'datastore_reads': DB_READ_CAPABILITY, 'datastore_writes': DB_WRITE_CAPABILITY}
+GLOBAL_VARS = {'version_id': VERSION_ID, 'max_file_size': MAX_FILE_SIZE_BYTES, 'max_file_size_human': MAX_FILE_SIZE_STRING}
 
 DEV_SERVER = os.environ['SERVER_SOFTWARE'].startswith('Development')
 
@@ -55,16 +55,14 @@ if DEV_MODE:
 
 	logging.warn('In development mode')
 	jinja_environment = jinja2.Environment(
-		loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')),
-		extensions=['pyjade.ext.jinja.PyJadeExtension']
+		loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
 	)
 else:
 	from google.appengine.api import memcache
 
 	jinja_environment = jinja2.Environment(
 		loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')),
-		bytecode_cache=jinja2.MemcachedBytecodeCache(memcache),
-		extensions=['pyjade.ext.jinja.PyJadeExtension']
+		bytecode_cache=jinja2.MemcachedBytecodeCache(memcache.Client())
 	)
 
 jinja_environment.globals.update(GLOBAL_VARS)

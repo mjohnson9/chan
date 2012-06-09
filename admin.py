@@ -14,7 +14,7 @@ def check_ip_ban_async(ip):
 	"""Checks for an IP ban.
 
 	Args:
-		ip: The integer representation of the IP to check.
+		ip: The IPAddress representation of the IP to check.
 
 	Returns:
 		A tuple of (banned, reason) where banned is a boolean and reason is a string or None.
@@ -36,7 +36,6 @@ def check_ip_ban_async(ip):
 	else:
 		our_key = models.Ban.get_key(ip_num)
 
-		#our_model = yield our_key.get_async()
 		our_model = yield ctx.get(our_key)
 
 		if our_model:

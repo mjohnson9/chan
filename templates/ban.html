@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<div class="row">
+		<div class="span12">
+			<form class="form-horizontal" method="POST" action="{{ action_url }}" enctype="multipart/form-data">
+				{% for error in errors %}
+					<div class="alert alert-error">{{ error }}</div>
+				{% endfor %}
+				{% if success %}
+					<div class="alert alert-success">Ban successful.</div>
+				{% endif %}
+				<fieldset>
+					<legend>Ban IP</legend>
+					<div class="control-group">
+						<label class="control-label" for="banee-ip">IP</label>
+						<div class="controls">
+							<input type="text" id="banee-ip" name="banee-ip" class="input-xlarge" pattern="^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" value="{{ ban_ip|default('', True) }}" required="required" />
+							<p class="help-block">The IP to ban.</p>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="ban-reason">Reason</label>
+						<div class="controls">
+							<input type="text" id="ban-reason" name="ban-reason" class="input-xlarge" value="{{ reason|default('', True) }}" required="required" />
+							<p class="help-block">This is the ban's reason. It will be shown to the user and other administrators.</p>
+						</div>
+					</div>
+					<div class="form-actions">
+						<button type="submit" class="btn btn-primary"{% if not db_writes_enabled %} disabled="disabled"{% endif %}>Ban{% if delete %} &amp; delete{% endif %}</button>
+						<button type="reset" class="btn">Cancel</button>
+					</div>
+				</fieldset>
+			</form>
+		</div>
+	</div>
+{% endblock %}

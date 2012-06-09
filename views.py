@@ -18,10 +18,11 @@ import admin
 import ipaddr
 
 
+class HandlerUtils(object):
+	THIS_PAGE = ""
 
-class BaseHandler(webapp2.RequestHandler):
 	def __init__(self, *args, **kwargs):
-		super(BaseHandler, self).__init__(*args, **kwargs)
+		super(HandlerUtils, self).__init__(*args, **kwargs)
 		self._is_banned = None
 		self._ban_reason = None
 
@@ -42,7 +43,7 @@ class BaseHandler(webapp2.RequestHandler):
 				forwarder_str = forwarder_str.strip()
 				forwarder = ipaddr.IPAddress(forwarder_str)
 				user_ip = forwarder
-				if utils.is_trusted_forwarder(forwarder):
+				if not utils.is_trusted_forwarder(forwarder):
 					break
 			return user_ip
 		else:
@@ -70,57 +71,16 @@ class BaseHandler(webapp2.RequestHandler):
 		if 'db_writes_enabled' not in context:
 			context['db_writes_enabled'] = config.DB_WRITE_CAPABILITY.is_enabled()
 
-		template = config.jinja_environment.get_template(_template)
-		self.response.write(template.render(context))
-
-class BaseUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
-	def __init__(self, *args, **kwargs):
-		super(BaseUploadHandler, self).__init__(*args, **kwargs)
-		self._is_banned = None
-		self._ban_reason = None
-
-	@ndb.tasklet
-	def user_is_banned_async(self, ip=None):
-		if ip is None: ip = self.user_ip
-		if self._is_banned is None:
-			self._is_banned, self._ban_reason = yield admin.check_ip_ban_async(ip)
-		raise ndb.Return(self._is_banned, self._ban_reason)
-
-	@webapp2.cached_property
-	def user_ip(self):
-		if 'X-Forwarded-For' in self.request.headers:
-			forwarded_for = self.request.remote_addr + ',' + self.request.headers['X-Forwarded-For']
-			forwarders = forwarded_for.split(',')
-			user_ip = None
-			for forwarder_str in forwarders:
-				forwarder_str = forwarder_str.strip()
-				forwarder = ipaddr.IPAddress(forwarder_str)
-				user_ip = forwarder
-				if utils.is_trusted_forwarder(forwarder):
-					break
-			return user_ip
-		else:
-			return ipaddr.IPAddress(self.request.remote_addr)
-
-	def render_response(self, _template, **context):
-		# Renders a template and writes the result to the response.
-		if 'user' not in context:
-			current_user = users.get_current_user()
-			if current_user:
-				context['user'] = current_user
-
-		if 'user_is_admin' not in context:
-			context['user_is_admin'] = users.is_current_user_admin()
-
-		if 'user_is_banned' not in context:
-			context['user_is_banned'] = self.user_is_banned()[0]
-
-		if 'user_ban_reason' not in context:
-			context['user_ban_reason'] = self.user_is_banned()[1]
+		if 'current_page' not in context:
+			context['current_page'] = self.THIS_PAGE
 
 		template = config.jinja_environment.get_template(_template)
 		self.response.write(template.render(context))
 
+class BaseHandler(HandlerUtils, webapp2.RequestHandler):
+	pass
+
+class BaseUploadHandler(HandlerUtils, blobstore_handlers.BlobstoreUploadHandler):
 	def _delete_files_async(self, exclude=None):
 		if not exclude:
 			logging.debug("Deleting all uploaded files...")
@@ -139,7 +99,33 @@ class BaseUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
 	def _validate_form(self):
 		return []
 
+	abort = webapp2.RequestHandler.abort
+
+class ImagePage(blobstore_handlers.BlobstoreDownloadHandler):
+	IMAGE_EXPIRATION_TIME = timedelta(days=30)
+	IMAGE_EXPIRATION_SECONDS = int(IMAGE_EXPIRATION_TIME.total_seconds())
+
+	@ndb.toplevel
+	def get(self, post_id_str):
+		post_id = int(post_id_str)
+
+		post_key = models.Post.get_key(post_id)
+
+		post = post_key.get()
+		if post and post.image:
+			self.response.cache_control.no_cache = None
+			self.response.cache_control.public = True
+			self.response.cache_control.max_age = self.IMAGE_EXPIRATION_SECONDS
+
+			self.response.expires = datetime.now() + self.IMAGE_EXPIRATION_TIME
+
+			self.send_blob(post.image)
+		else:
+			self.abort(404)
+
 class IndexPage(BaseHandler):
+	THIS_PAGE = "home"
+
 	@ndb.toplevel
 	def get(self):
 		index_threads_rpc = models.Post.get_index_page_async()
@@ -151,9 +137,9 @@ class IndexPage(BaseHandler):
 		if db_writes_enabled and not user_ban[0]:
 			upload_url_rpc = blobstore.create_upload_url_async("/new-thread/%s" % int(self.user_ip), max_bytes_per_blob=config.MAX_FILE_SIZE_BYTES, max_bytes_total=config.MAX_FILE_SIZE_BYTES)
 
-			self.render_response('index.jade', upload_url=utils.clean_dev_url(upload_url_rpc.get_result()), threads=index_threads_rpc.get_result(), db_writes_enabled=db_writes_enabled)
+			self.render_response('index.html', upload_url=utils.clean_dev_url(upload_url_rpc.get_result()), threads=index_threads_rpc.get_result(), db_writes_enabled=db_writes_enabled)
 		else:
-			self.render_response('index.jade', threads=index_threads_rpc.get_result(), db_writes_enabled=db_writes_enabled)
+			self.render_response('index.html', threads=index_threads_rpc.get_result(), db_writes_enabled=db_writes_enabled)
 
 class PostPage(BaseHandler):
 	@ndb.toplevel
@@ -175,43 +161,23 @@ class PostPage(BaseHandler):
 				if db_writes_enabled and not user_ban[0]:
 					upload_url_rpc = blobstore.create_upload_url_async("/post/%d/reply/%s" % (post_id, int(self.user_ip)), max_bytes_per_blob=config.MAX_FILE_SIZE_BYTES, max_bytes_total=config.MAX_FILE_SIZE_BYTES)
 
-					self.render_response('post_view.jade', main_post=post, upload_url=utils.clean_dev_url(upload_url_rpc.get_result()), child_posts=child_posts_rpc.get_result(), comment=comment_text, db_writes_enabled=db_writes_enabled)
+					self.render_response('post_view.html', main_post=post, upload_url=utils.clean_dev_url(upload_url_rpc.get_result()), child_posts=child_posts_rpc.get_result(), comment=comment_text, db_writes_enabled=db_writes_enabled)
 				else:
-					self.render_response('post_view.jade', main_post=post, child_posts=child_posts_rpc.get_result(), comment=comment_text, db_writes_enabled=db_writes_enabled)
+					self.render_response('post_view.html', main_post=post, child_posts=child_posts_rpc.get_result(), comment=comment_text, db_writes_enabled=db_writes_enabled)
 			else:
 				if 'comment' in self.request.GET:
 					self.redirect('/post/%d?comment=%s#%d' % (post.parent_thread.id(), self.request.GET['comment'], post_id))
 				else:
 					self.redirect('/post/%d#%d' % (post.parent_thread.id(), post_id))
 		else:
-			self.response.status = 404
-
-class ImagePage(blobstore_handlers.BlobstoreDownloadHandler):
-	IMAGE_EXPIRATION_TIME = timedelta(days=30)
-	IMAGE_EXPIRATION_SECONDS = round(IMAGE_EXPIRATION_TIME.total_seconds(), 0)
-
-	@ndb.toplevel
-	def get(self, post_id_str):
-		post_id = int(post_id_str)
-
-		post_key = models.Post.get_key(post_id)
-
-		post = post_key.get()
-		if post and post.image:
-			self.response.cache_control.no_cache = None
-			self.response.cache_control.max_age = self.IMAGE_EXPIRATION_SECONDS
-			self.response.cache_control.public = True
-
-			self.response.expires = datetime.now() + self.IMAGE_EXPIRATION_TIME
-
-			self.send_blob(post.image)
-		else:
-			self.response.status = 404
+			self.abort(404)
 
 class BanPage(BaseHandler):
+	THIS_PAGE = "ban"
+
 	def display_page(self, ip=None, reason=None, errors=None, delete=False, success=False):
 		if errors is None: errors=[]
-		self.render_response('ban.jade', ban_ip=ip, errors=errors, delete=delete, reason=reason, action_url=self.request.path_qs, success=not (not success))
+		self.render_response('ban.html', ban_ip=ip, errors=errors, delete=delete, reason=reason, action_url=self.request.path_qs, success=not (not success))
 
 	@ndb.toplevel
 	def get(self, post_id_str=None, delete=None):
@@ -239,7 +205,7 @@ class BanPage(BaseHandler):
 			current_user = users.get_current_user()
 
 			if current_user:
-				self.response.status = 403
+				self.abort(403)
 			else:
 				self.redirect('/login')
 
@@ -271,7 +237,7 @@ class BanPage(BaseHandler):
 			else:
 				ban_ip_num = int(ban_ip)
 
-				banned_rpc = admin.check_ip_ban_async(ban_ip_num)
+				banned_rpc = admin.check_ip_ban_async(ban_ip)
 
 				ban_key = models.Ban.get_key(ban_ip_num)
 
@@ -299,9 +265,9 @@ class BanPage(BaseHandler):
 
 						memcache.delete_multi([ban_ip_num_str, '%s/reason' % ban_ip_num_str], key_prefix=admin.MEMCACHE_BAN_PREFIX)
 
-						self.display_page(ip=ban_ip, reason=ban_reason, success=True, delete=delete)
+						self.display_page(ip=ban_ip_num, reason=ban_reason, success=True, delete=delete)
 					else:
-						self.display_page(errors=['A ban with that IP and reason already exists.'], ip=ban_ip, reason=ban_reason, delete=delete)
+						self.display_page(errors=['A ban with that IP and reason already exists.'], ip=str(ban_ip), reason=ban_reason, delete=delete)
 				else:
 					ban_ip_num_str = str(ban_ip_num)
 
@@ -314,12 +280,12 @@ class BanPage(BaseHandler):
 
 					memcache.delete_multi([ban_ip_num_str, '%s/reason' % ban_ip_num_str], key_prefix=admin.MEMCACHE_BAN_PREFIX)
 
-					self.display_page(ip=ban_ip, reason=ban_reason, success=True, delete=delete)
+					self.display_page(ip=str(ban_ip), reason=ban_reason, success=True, delete=delete)
 		else:
 			current_user = users.get_current_user()
 
 			if current_user:
-				self.response.status = 403
+				self.abort(403)
 			else:
 				self.redirect('/login')
 
@@ -342,12 +308,16 @@ class NewThreadPage(BaseUploadHandler):
 			index_threads_rpc = models.Post.get_index_page_async()
 			delete_rpc = self._delete_files_async()
 
-			self.render_response("index.jade", post_errors=errors, threads=index_threads_rpc.get_result())
+			self.render_response("index.html", post_errors=errors, threads=index_threads_rpc.get_result())
 
 			delete_rpc.wait()
 		else:
 			ip_num = int(ip_num_str)
-			if not self.user_is_banned(ip_num)[0]:
+			ip = ipaddr.IPAddress(ip_num)
+
+			ban_rpc = self.user_is_banned_async(ip)
+
+			if not ban_rpc.get_result()[0]:
 				image_info = self.get_uploads()[0]
 				image_key = image_info.key()
 
@@ -355,9 +325,9 @@ class NewThreadPage(BaseUploadHandler):
 
 				if image_info.size > config.MAX_FILE_SIZE_BYTES:
 					index_threads_rpc = models.Post.get_index_page_async()
-					blobstore.delete([image_key])
+					blobstore.delete(image_key)
 					delete_rpc.wait()
-					self.render_response("index.jade", post_errors=['The supplied file was too large.'], threads=index_threads_rpc.get_result())
+					self.render_response("index.html", post_errors=['The supplied file was too large.'], threads=index_threads_rpc.get_result())
 					logging.info("File was too large")
 					return
 
@@ -368,16 +338,16 @@ class NewThreadPage(BaseUploadHandler):
 					_ = image_data.height
 				except images.NotImageError:
 					index_threads_rpc = models.Post.get_index_page_async()
-					blobstore.delete([image_key])
+					blobstore.delete(image_key)
 					delete_rpc.wait()
-					self.render_response("index.jade", post_errors=['The supplied file was not an image.'], threads=index_threads_rpc.get_result())
+					self.render_response("index.html", post_errors=['The supplied file was not an image.'], threads=index_threads_rpc.get_result())
 					logging.info("Not an image", exc_info=True)
 					return
 				except images.Error:
 					index_threads_rpc = models.Post.get_index_page_async()
-					blobstore.delete([image_key])
+					blobstore.delete(image_key)
 					delete_rpc.wait()
-					self.render_response("index.jade", post_errors=['An unknown error occurred when we attempted to process the file you supplied.'], threads=index_threads_rpc.get_result())
+					self.render_response("index.html", post_errors=['An unknown error occurred when we attempted to process the file you supplied.'], threads=index_threads_rpc.get_result())
 					logging.warn("Unknown error when processing image", exc_info=True)
 					return
 
@@ -396,28 +366,24 @@ class NewThreadPage(BaseUploadHandler):
 				post.image_height = image_data.height
 				post.image_url = utils.get_image_url(image_info)
 
+				post_as = self.request.POST.get('post-as', None)
+
 				if current_user:
 					post.user = current_user
-					if 'post-as-anonymous' in self.request.POST:
+					if post_as == 'anonymous':
 						post.username = 'Anonymous'
 					else:
-						if current_user_admin:
-							if 'post-as-admin' in self.request.POST:
-								post.capcode = "Admin"
-							else:
-								post.capcode = "Logged in"
+						if current_user_admin and post_as == 'admin':
+							post.capcode = "Admin"
 						else:
 							post.capcode = "Logged in"
 						post.username = current_user.nickname()
 						if 'post-include-email' in self.request.POST:
 							post.email = current_user.email()
 				else:
-					if 'poster-name' in self.request.POST:
-						poster_name = self.request.POST['poster-name'].strip()
-						if len(poster_name) > 0:
-							post.username = self.request.POST['poster-name']
-						else:
-							post.username = 'Anonymous'
+					poster_name = self.request.POST.get('poster-name', '').strip()
+					if len(poster_name) > 0:
+						post.username = self.request.POST['poster-name']
 					else:
 						post.username = 'Anonymous'
 
@@ -425,10 +391,10 @@ class NewThreadPage(BaseUploadHandler):
 						post.email = self.request.POST['poster-email']
 
 				if 'post-subject' in self.request.POST:
-					post.subject = cgi.escape(self.request.POST['post-subject'])
+					post.subject = self.request.POST['post-subject']
 
 				if 'post-comment' in self.request.POST:
-					post.comment = cgi.escape(self.request.POST['post-comment'].strip()).replace("\n", "<br/>\n")
+					post.comment = utils.format_comment(self.request.POST['post-comment'])
 
 				post.put()
 
@@ -441,7 +407,7 @@ class NewThreadPage(BaseUploadHandler):
 
 				logging.info("Banned user attempted to post")
 
-				self.render_response("index.jade", threads=index_threads_rpc.get_result())
+				self.render_response("index.html", threads=index_threads_rpc.get_result())
 
 				delete_rpc.wait()
 	def _validate_form(self):
@@ -459,8 +425,6 @@ class NewThreadPage(BaseUploadHandler):
 
 		return errors
 
-POST_REFERENCE_REGEX = re.compile("&gt;&gt;(\d+)", re.IGNORECASE)
-
 class NewPostPage(BaseUploadHandler):
 	@ndb.toplevel
 	def post(self, post_id_str, ip_num_str):
@@ -477,12 +441,16 @@ class NewPostPage(BaseUploadHandler):
 				delete_rpc = self._delete_files_async()
 				child_posts_rpc = models.Post.get_child_posts_async(main_post_key)
 
-				self.render_response("post_view.jade", post_errors=errors, main_post=main_post, posts=child_posts_rpc.get_result())
+				self.render_response("post_view.html", post_errors=errors, main_post=main_post, posts=child_posts_rpc.get_result())
 
 				delete_rpc.wait()
 			else:
 				ip_num = int(ip_num_str)
-				if not self.user_is_banned(ip_num)[0]:
+				ip = ipaddr.IPAddress(ip_num)
+
+				ban_rpc = self.user_is_banned_async(ip)
+
+				if not ban_rpc.get_result()[0]:
 					uploads = self.get_uploads()
 					if len(uploads) > 0:
 						image_info = self.get_uploads()[0]
@@ -492,8 +460,8 @@ class NewPostPage(BaseUploadHandler):
 
 						if image_info.size > config.MAX_FILE_SIZE_BYTES:
 							child_posts_rpc = models.Post.get_child_posts_async(main_post_key)
-							blobstore.delete([image_key])
-							self.render_response("post_view.jade", post_errors=['The supplied file was too large.'], main_post=main_post, posts=child_posts_rpc.get_result())
+							blobstore.delete(image_key)
+							self.render_response("post_view.html", post_errors=['The supplied file was too large.'], main_post=main_post, posts=child_posts_rpc.get_result())
 							logging.info("File was too large")
 							delete_rpc.wait()
 							return
@@ -505,15 +473,15 @@ class NewPostPage(BaseUploadHandler):
 							_ = image_data.height
 						except images.NotImageError:
 							child_posts_rpc = models.Post.get_child_posts_async(main_post_key)
-							blobstore.delete([image_key])
-							self.render_response("post_view.jade", post_errors=['The supplied file was not an image.'], main_post=main_post, posts=child_posts_rpc.get_result())
+							blobstore.delete(image_key)
+							self.render_response("post_view.html", post_errors=['The supplied file was not an image.'], main_post=main_post, posts=child_posts_rpc.get_result())
 							logging.info("Not an image", exc_info=True)
 							delete_rpc.wait()
 							return
 						except images.Error:
 							child_posts_rpc = models.Post.get_child_posts_async(main_post_key)
-							blobstore.delete([image_key])
-							self.render_response("post_view.jade", post_errors=['An unknown error occurred when we attempted to process the file you supplied.'], main_post=main_post, posts=child_posts_rpc.get_result())
+							blobstore.delete(image_key)
+							self.render_response("post_view.html", post_errors=['An unknown error occurred when we attempted to process the file you supplied.'], main_post=main_post, posts=child_posts_rpc.get_result())
 							logging.warn("Unknown error when processing image", exc_info=True)
 							delete_rpc.wait()
 							return
@@ -544,28 +512,24 @@ class NewPostPage(BaseUploadHandler):
 						post.image_height = image_data.height
 						post.image_url = utils.get_image_url(image_info)
 
+					post_as = self.request.POST.get('post-as', None)
+
 					if current_user:
 						post.user = current_user
-						if 'post-as-anonymous' in self.request.POST:
+						if post_as == 'anonymous':
 							post.username = 'Anonymous'
 						else:
-							if current_user_admin:
-								if 'post-as-admin' in self.request.POST:
-									post.capcode = "Admin"
-								else:
-									post.capcode = "Logged in"
+							if current_user_admin and post_as == 'admin':
+								post.capcode = "Admin"
 							else:
 								post.capcode = "Logged in"
 							post.username = current_user.nickname()
 							if 'post-include-email' in self.request.POST:
 								post.email = current_user.email()
 					else:
-						if 'poster-name' in self.request.POST:
-							poster_name = self.request.POST['poster-name'].strip()
-							if len(poster_name) > 0:
-								post.username = poster_name
-							else:
-								post.username = 'Anonymous'
+						poster_name = self.request.POST.get('poster-name', '').strip()
+						if len(poster_name) > 0:
+							post.username = poster_name
 						else:
 							post.username = 'Anonymous'
 
@@ -580,8 +544,7 @@ class NewPostPage(BaseUploadHandler):
 						post.subject = cgi.escape(self.request.POST['post-subject'])
 
 					if 'post-comment' in self.request.POST:
-						post.comment = cgi.escape(self.request.POST['post-comment'].strip()).replace("\n", "<br/>\n")
-						post.comment = POST_REFERENCE_REGEX.sub("<a href=\"/post/\\1#\\1\">&gt;&gt;\\1</a>", post.comment)
+						post.comment = utils.format_comment(self.request.POST['post-comment'])
 
 					if main_post_changed:
 						ndb.put_multi([main_post, post])
@@ -596,13 +559,13 @@ class NewPostPage(BaseUploadHandler):
 					child_posts_rpc = models.Post.get_child_posts_async(main_post_key)
 					delete_rpc = self._delete_files_async()
 
-					self.render_response("post_view.jade", main_post=main_post, posts=child_posts_rpc.get_result())
+					self.render_response("post_view.html", main_post=main_post, posts=child_posts_rpc.get_result())
 
 					delete_rpc.wait()
 		else:
 			delete_rpc = self._delete_files_async()
 
-			self.response.status = 404
+			self.abort(404)
 
 			delete_rpc.wait()
 

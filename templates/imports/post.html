@@ -1,0 +1,45 @@
+{% macro post(post, omitted=False) %}
+	<div class="row post" data-post-id="{{ post.key.id() }}">
+		<a id="{{ post.key.id() }}"></a>
+		{% if post.image %}
+			<div class="span3">
+				<a class="thumbnail" href="/image/{{ post.key.id() }}">
+					<img src="{{ post.image_url }}=s260" title="{{ post.image_width }}x{{ post.image_height }}"/>
+				</a>
+			</div>
+		{% endif %}
+		<div class="span9{% if not post.image %} offset3{% endif %}">
+			{% if post.subject %}
+				<span class="post-subject">{{ post.subject }}</span>
+			{% endif %}
+			<span class="user-info"{% if post.capcode %} data-capcode="{{ post.capcode|lower() }}"{% endif %}>
+				{% if post.email %}<a href="mailto:{{ post.email }}">{% endif %}
+					<span class="username">{{ post.username }}</span>
+				{% if post.email %}</a>{% endif %}
+				{% if post.capcode %}<span class="capcode">{{ post.capcode }}</span>{% endif %}
+			</span>
+			<span class="posted">{{ post.posted_string }}</span>
+			<span class="post-number">{{ post.key.id() }}</span>
+			<div class="thread-toolbar btn-toolbar">
+				<div class="btn-group">
+					<a class="btn-reply btn btn-mini btn-primary" href="/post/{{ post.key.id() }}?comment=>>{{ post.key.id() }}#post">Reply</a>
+					<a class="btn btn-mini" href="/post/{{ post.key.id() }}#{{ post.key.id() }}">Permalink</a>
+				</div>
+				{% if user_is_admin %}
+					<div class="btn-group">
+						<a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="#"><i class="icon-user"></i> Admin <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="/admin/post/{{ post.key.id() }}/delete"><i class="icon-trash"></i> Delete</a></li>
+							<li><a href="/admin/post/{{ post.key.id() }}/ban"><i class="icon-ban-circle"></i> Ban</a></li>
+							<li><a href="/admin/post/{{ post.key.id() }}/bandelete"><i class="icon-exclamation-sign"></i> Ban &amp; delete</a></li>
+							<li class="divider"></li>
+							<li><a>IP address: {{ post.ip_string }}</a></li>
+						</ul>
+					</div>
+				{% endif %}
+			</div>
+			{% if post.comment %}<p class="well comment-well">{{ post.comment }}</p>{% endif %}
+			{% if omitted %}<p>All replies are omitted. Click reply to view.</p>{% endif %}
+		</div>
+	</div>
+{% endmacro %}

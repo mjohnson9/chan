@@ -1,0 +1,15 @@
+CACHE MANIFEST
+# {{ version_id }}
+
+# Explicitly cached entries
+static/*/{{ version_id }}/*
+image/*
+https://*.ggpht.com/*
+
+# offline.html will be displayed if the user is offline
+FALLBACK:
+* /offline.html
+
+# All other resources (e.g. sites) require the user to be online.
+NETWORK:
+*

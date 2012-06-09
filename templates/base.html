@@ -2,33 +2,93 @@
 <html>
 	<head>
 		<title>chan</title>
-		<link rel="stylesheet" href="/static/{{ version_id }}/css/bootstrap.css"/>
-		<link rel="stylesheet" href="/static/{{ version_id }}/css/bootstrap-responsive.css"/>
-		<link rel="stylesheet" href="/static/{{ version_id }}/css/chan.css"/>
+		<link rel="stylesheet" href="/static/{{ version_id }}/css/bootstrap.css" title="Bootstrap" />
+		<link rel="alternate stylesheet" href="/static/{{ version_id }}/css/united.css" title="United" />
+		<link rel="stylesheet" href="/static/{{ version_id }}/css/bootstrap-responsive.css" />
+		<link rel="stylesheet" href="/static/{{ version_id }}/css/nightexcessive.css" />
+		<link rel="stylesheet" href="/static/{{ version_id }}/css/chan.css" />
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
+		<script type="text/javascript" src="/static/{{ version_id }}/js/styleswitcher.js"></script>
 		<script type="text/javascript" src="/static/{{ version_id }}/js/bootstrap.js"></script>
 	</head>
 	<body>
 		<div class="container">
+			<div id="messages">
+				<noscript>
+					<div class="alert">
+						<strong>JavaScript</strong>&nbsp;You must have JavaScript enabled for this site to work properly.
+					</div>
+				</noscript>
+			</div>
 			{% block content_head %}
-				<div class="navbar navbar-fixed-top">
+				<div class="navbar">
 					<div class="navbar-inner">
 						<div class="container">
 							<a class="brand">chan</a>
 							<ul class="nav">
-								<li><a href="/">Home</a></li>
+								<li{% if current_page == 'home' %} class="active"{% endif %}><a href="/">Home</a></li>
 							</ul>
 
 							<ul class="nav pull-right">
+								<li class="dropdown">
+									<a class="dropdown-toggle" data-toggle="dropdown">Themes<b class="caret"></b></a>
+									<ul class="dropdown-menu" id="themeselector-menu">
+										<li data-theme-name="Bootstrap"><a href="#">Default</a></li>
+										<li data-theme-name="United"><a href="#">United</a></li>
+									</ul>
+								</li>
 								{% if user_is_admin %}
+									<li class="dropdown">
+										<a class="dropdown-toggle" data-toggle="dropdown">Admin<b class="caret"></b></a>
+										<ul class="dropdown-menu">
+											<li{% if current_page == 'ban' %} class="active"{% endif %}><a href="/admin/ban">Ban</a></li>
+										</ul>
+									</li>
+								{% endif %}
 
+								<li>
+									{% if user %}
+										<a href="/logout">Logout</a>
+									{% else %}
+										<a href="/login">Login</a>
+									{% endif %}
+								</li>
 							</ul>
 						</div>
 					</div>
 				</div>
+				{% if not db_writes_enabled %}
+					<div class="row">
+						<div class="span12">
+							<div class="alert">
+								Our database is temporarily read-only.
+							</div>
+						</div>
+					</div>
+				{% endif %}
+			{% endblock %}
+			{% block top_ad %}
+				<div class="row">
+					<div class="span12 ad-container top-ad">
+						<script type="text/javascript">google_ad_client="ca-pub-5045023404782237";google_ad_slot="2885287145";google_ad_width=728;google_ad_height=90;</script>
+						<script type="text/javascript" src="https://pagead2.googlesyndication.com/pagead/show_ads.js"></script>
+					</div>
+				</div>
 			{% endblock %}
 			{% block content %}
-
+				<div class="row">
+					<div class="span12">
+						<div class="alert alert-error">Gib content!</div>
+					</div>
+				</div>
+			{% endblock %}
+			{% block bottom_ad %}
+				<div class="row">
+					<div class="span12 ad-container bottom-ad">
+						<script type="text/javascript">google_ad_client="ca-pub-5045023404782237";google_ad_slot="4134954748";google_ad_width=728;google_ad_height=90;</script>
+						<script type="text/javascript" src="https://pagead2.googlesyndication.com/pagead/show_ads.js"></script>
+					</div>
+				</div>
 			{% endblock %}
 			{% block content_foot %}{% endblock %}
 		</div>
