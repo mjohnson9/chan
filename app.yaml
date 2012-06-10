@@ -16,8 +16,13 @@ skip_files:
 - ^(.*/)?.*\.py[co]
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
-- ^(.*/)?chan\.iml
 - ^(.*/)?static/closure-library/.*
+- ^(.*/)?database/.*
+- ^(.*/)?.git/.*
+- ^(.*/)?.gitignore
+- ^(.*/)?.gitattributes
+- ^(.*/)?.gitmodules
+- ^(.*/)?run
 
 libraries:
 - name: jinja2
