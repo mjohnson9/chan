@@ -17,7 +17,7 @@
 
 	$("#main-content").live("pjax:start", function() {
 		hide_loading_message();
-		loading_message_timeout = setTimeout(show_loading_message, 100);
+		loading_message_timeout = setTimeout(show_loading_message, 250);
 	}).live("pjax:end", function() {
 		hide_loading_message();
 	});
