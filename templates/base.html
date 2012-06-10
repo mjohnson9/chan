@@ -35,9 +35,9 @@
 							<ul class="nav pull-right">
 								<li class="dropdown">
 									<a class="dropdown-toggle" data-toggle="dropdown">Themes<b class="caret"></b></a>
-									<ul class="dropdown-menu" id="themeselector-menu">
-										<li data-theme-name="Bootstrap"><a href="#">Default</a></li>
-										<li data-theme-name="United"><a href="#">United</a></li>
+									<ul class="dropdown-menu" id="theme-selector-menu">
+										<li data-theme-name="Bootstrap"><a data-no-pjax>Default</a></li>
+										<li data-theme-name="United"><a data-no-pjax>United</a></li>
 									</ul>
 								</li>
 								{% if user_is_admin %}
@@ -51,9 +51,9 @@
 
 								<li>
 									{% if user %}
-										<a href="/logout">Logout</a>
+										<a href="/logout" data-no-pjax>Logout</a>
 									{% else %}
-										<a href="/login">Login</a>
+										<a href="/login" data-no-pjax>Login</a>
 									{% endif %}
 								</li>
 							</ul>

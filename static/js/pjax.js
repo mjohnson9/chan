@@ -1,5 +1,5 @@
 (function() {
-	$('a').pjax('#main-content');
+	$('a:not([data-no-pjax])').pjax('#main-content');
 
 	var loading_message_timeout;
 

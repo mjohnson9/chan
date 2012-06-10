@@ -101,3 +101,7 @@
 .bottom-ad {
 	margin-top: 25px;
 }
+
+#theme-selector-menu > li > a {
+	cursor: pointer;
+}
