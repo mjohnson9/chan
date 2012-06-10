@@ -1,3 +1,10 @@
 #!/bin/bash
 
-python2.7 ${HOME}/appengine/dev_appserver.py --address=0.0.0.0 --blobstore_path=${HOME}/appengine-database/chan/blobstore --history_path=${HOME}/appengine-database/chan/history --datastore_path=${HOME}/appengine-database/chan/datastore --high_replication .
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+cd "${BASE_DIR}"
+
+mkdir -p database
+mkdir -p database/blobstore
+
+python2.7 ${HOME}/appengine/dev_appserver.py --address=0.0.0.0 --blobstore_path=database/blobstore --history_path=database/history --datastore_path=database/datastore --high_replication .
