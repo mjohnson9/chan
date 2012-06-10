@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>chan</title>
+		<title>{% block page_title %}chan{% endblock %}</title>
 		<link rel="stylesheet" href="/static/{{ version_id }}/css/bootstrap.css" title="Bootstrap" />
 		<link rel="alternate stylesheet" href="/static/{{ version_id }}/css/united.css" title="United" />
 		<link rel="stylesheet" href="/static/{{ version_id }}/css/bootstrap-responsive.css" />
 		<link rel="stylesheet" href="/static/{{ version_id }}/css/nightexcessive.css" />
 		<link rel="stylesheet" href="/static/{{ version_id }}/css/chan.css" />
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
+		<script type="text/javascript" src="/static/{{ version_id }}/js/external/jquery.pjax.js"></script>
 		<script type="text/javascript" src="/static/{{ version_id }}/js/styleswitcher.js"></script>
-		<script type="text/javascript" src="/static/{{ version_id }}/js/bootstrap.js"></script>
+		<script type="text/javascript" src="/static/{{ version_id }}/js/external/bootstrap.js"></script>
+		<script type="text/javascript" src="/static/{{ version_id }}/js/pjax.js"></script>
 	</head>
 	<body>
 		<div class="container">
-			<div id="messages">
-				<noscript>
-					<div class="alert">
-						<strong>JavaScript</strong>&nbsp;You must have JavaScript enabled for this site to work properly.
-					</div>
-				</noscript>
+			<noscript>
+				<div class="alert">
+					<strong>JavaScript</strong>&nbsp;You must have JavaScript enabled for this site to work properly.
+				</div>
+			</noscript>
+			<div id="page-notification" class="alert alert-info" style="display: none;">
+				Loading...
 			</div>
 			{% block content_head %}
 				<div class="navbar">
@@ -26,7 +29,7 @@
 						<div class="container">
 							<a class="brand">chan</a>
 							<ul class="nav">
-								<li{% if current_page == 'home' %} class="active"{% endif %}><a href="/">Home</a></li>
+								<li{% if current_page == 'home' %} class="active"{% endif %} data-nav-name="home"><a href="/">Home</a></li>
 							</ul>
 
 							<ul class="nav pull-right">
@@ -41,7 +44,7 @@
 									<li class="dropdown">
 										<a class="dropdown-toggle" data-toggle="dropdown">Admin<b class="caret"></b></a>
 										<ul class="dropdown-menu">
-											<li{% if current_page == 'ban' %} class="active"{% endif %}><a href="/admin/ban">Ban</a></li>
+											<li{% if current_page == 'ban' %} class="active"{% endif %} data-nav-name="ban"><a href="/admin/ban">Ban</a></li>
 										</ul>
 									</li>
 								{% endif %}
@@ -57,15 +60,6 @@
 						</div>
 					</div>
 				</div>
-				{% if not db_writes_enabled %}
-					<div class="row">
-						<div class="span12">
-							<div class="alert">
-								Our database is temporarily read-only.
-							</div>
-						</div>
-					</div>
-				{% endif %}
 			{% endblock %}
 			{% block top_ad %}
 				<div class="row">
@@ -75,13 +69,24 @@
 					</div>
 				</div>
 			{% endblock %}
-			{% block content %}
-				<div class="row">
-					<div class="span12">
-						<div class="alert alert-error">Gib content!</div>
+			<div id="main-content">
+				{% if not db_writes_enabled %}
+					<div class="row">
+						<div class="span12">
+							<div class="alert">
+								Our database is temporarily read-only.
+							</div>
+						</div>
 					</div>
-				</div>
-			{% endblock %}
+				{% endif %}
+				{% block content %}
+					<div class="row">
+						<div class="span12">
+							<div class="alert alert-error">Gib content!</div>
+						</div>
+					</div>
+				{% endblock %}
+			</div>
 			{% block bottom_ad %}
 				<div class="row">
 					<div class="span12 ad-container bottom-ad">

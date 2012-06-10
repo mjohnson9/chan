@@ -1,0 +1,20 @@
+<title>{% block page_title %}chan{% endblock %}</title>
+
+{% if current_page %}<script type="text/javascript">change_selected_tab("{{ current_page }}");</script>{% else %}<script type="text/javascript">change_selected_tab(null);</script>{% endif %}
+
+{% if not db_writes_enabled %}
+	<div class="row">
+		<div class="span12">
+			<div class="alert">
+				Our database is temporarily read-only.
+			</div>
+		</div>
+	</div>
+{% endif %}
+{% block content %}
+	<div class="row">
+		<div class="span12">
+			<div class="alert alert-error">Gib content!</div>
+		</div>
+	</div>
+{% endblock %}

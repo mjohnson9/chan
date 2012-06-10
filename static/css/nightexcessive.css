@@ -1,3 +1,29 @@
+#page-notification {
+	position: fixed;
+
+	top: 0;
+	left: 50%;
+
+	clear: both;
+
+	padding-left: 0;
+	padding-right: 0;
+
+	text-align: center;
+
+	width: 120px;
+	margin-left: -60px;
+
+	z-index: 5;
+
+	-webkit-border-top-left-radius: 0;
+	-webkit-border-top-right-radius: 0;
+	-moz-border-radius-topleft: 0;
+	-moz-border-radius-topright: 0;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+
 /*button, .btn {
 	border-width: 1px;
 	border-style: solid;

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% if not pjax %}{% extends "base.html" %}{% else %}{% extends "base-pjax.html" %}{% endif %}
 
 {% block content %}
 	<div class="row">

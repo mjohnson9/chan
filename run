@@ -1,0 +1,3 @@
+#!/bin/bash
+
+python2.7 ${HOME}/appengine/dev_appserver.py --address=0.0.0.0 --blobstore_path=${HOME}/appengine-database/chan/blobstore --history_path=${HOME}/appengine-database/chan/history --datastore_path=${HOME}/appengine-database/chan/datastore --high_replication .

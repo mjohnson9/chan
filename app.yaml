@@ -54,31 +54,7 @@ handlers:
 - url: /static/js
   static_dir: static/js
 
-- url: /login
-  script: main.app
-
-- url: /logout
-  script: main.app
-
-- url: /new-thread/.+
-  script: main.app
-
-- url: /post/\d+
-  script: main.app
-
-- url: /post/\d+/reply/.+
-  script: main.app
-
-- url: /image/\d+
-  script: main.app
-
-- url: /admin/post/\d+/ban(delete)?
-  script: main.app
-
-- url: /admin/ban
-  script: main.app
-
-- url: /
+- url: .*
   script: main.app
 
 error_handlers:

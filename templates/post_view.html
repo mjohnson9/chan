@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% if not pjax %}{% extends "base.html" %}{% else %}{% extends "base-pjax.html" %}{% endif %}
 
 {% from "imports/post.html" import post with context %}
 {% from "imports/forms.html" import post_form with context %}

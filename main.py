@@ -9,15 +9,23 @@ class ErrorHandler(object):
 	class Contents(object):
 		NOT_FOUND_PATH = os.path.join("static", "errors", "404.html")
 
-		NOT_FOUND_FILE = open(NOT_FOUND_PATH, "r")
-		NOT_FOUND = NOT_FOUND_FILE.read()
-		NOT_FOUND_FILE.close()
+		with open(NOT_FOUND_PATH, "r") as NOT_FOUND_FILE:
+			NOT_FOUND = NOT_FOUND_FILE.read()
+
+		NOT_FOUND_PJAX_PATH = os.path.join("static", "errors", "404-pjax.html")
+
+		with open(NOT_FOUND_PATH, "r") as NOT_FOUND_PJAX_FILE:
+			NOT_FOUND_PJAX = NOT_FOUND_PJAX_FILE.read()
 
 	@classmethod
 	def page_not_found(cls, request, response, exception):
 		logging.debug("404 handler called", exc_info=exception)
-		response.write(cls.Contents.NOT_FOUND)
-		response.set_status(404)
+
+		if 'X-PJAX' in request.headers and request.headers['X-PJAX'].lower() == "true":
+			response.write(cls.Contents.NOT_FOUND_PJAX)
+		else:
+			response.write(cls.Contents.NOT_FOUND)
+		response.status = 404
 
 app = webapp2.WSGIApplication([
                                ('/', views.IndexPage),

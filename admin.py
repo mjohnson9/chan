@@ -34,7 +34,7 @@ def check_ip_ban_async(ip):
 	if memcache_result[0] is not None:
 		raise ndb.Return(memcache_result[0], memcache_result[1])
 	else:
-		our_key = models.Ban.get_key(ip_num)
+		our_key = models.Ban.get_key(ip_num_str)
 
 		our_model = yield ctx.get(our_key)
 
@@ -48,7 +48,7 @@ def check_ip_ban_async(ip):
 			raise ndb.Return(False, None)
 
 def get_ip_ban(ip, reason=None):
-	our_key = models.Ban.get_key(int(ip))
+	our_key = models.Ban.get_key(str(int(ip)))
 
 	our_model = models.Ban(key=our_key, reason=reason)
 

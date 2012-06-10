@@ -51,6 +51,11 @@ class HandlerUtils(object):
 
 	def render_response(self, _template, **context):
 		# Renders a template and writes the result to the response.
+		if 'user_is_banned' not in context or 'user_ban_reason' not in context:
+			ban_rpc = self.user_is_banned_async()
+		else:
+			ban_rpc = None
+
 		if 'user' not in context:
 			current_user = users.get_current_user()
 			if current_user:
@@ -59,20 +64,21 @@ class HandlerUtils(object):
 		if 'user_is_admin' not in context:
 			context['user_is_admin'] = users.is_current_user_admin()
 
-		if 'user_is_banned' not in context or 'user_ban_reason' not in context:
-			ban_rpc = self.user_is_banned_async()
-
-			if 'user_is_banned' not in context:
-				context['user_is_banned'] = ban_rpc.get_result()[0]
-
-			if 'user_ban_reason' not in context:
-				context['user_ban_reason'] = ban_rpc.get_result()[1]
-
 		if 'db_writes_enabled' not in context:
 			context['db_writes_enabled'] = config.DB_WRITE_CAPABILITY.is_enabled()
 
 		if 'current_page' not in context:
 			context['current_page'] = self.THIS_PAGE
+
+		if 'X-PJAX' in self.request.headers and self.request.headers['X-PJAX'].lower() == "true":
+			context['pjax'] = True
+
+		if ban_rpc is not None:
+			if 'user_is_banned' not in context:
+				context['user_is_banned'] = ban_rpc.get_result()[0]
+
+			if 'user_ban_reason' not in context:
+				context['user_ban_reason'] = ban_rpc.get_result()[1]
 
 		template = config.jinja_environment.get_template(_template)
 		self.response.write(template.render(context))
@@ -236,10 +242,11 @@ class BanPage(BaseHandler):
 				self.display_page(errors=errors, ip=ban_ip_str_post, reason=ban_reason, delete=delete)
 			else:
 				ban_ip_num = int(ban_ip)
+				ban_ip_num_str = str(ban_ip_num)
 
 				banned_rpc = admin.check_ip_ban_async(ban_ip)
 
-				ban_key = models.Ban.get_key(ban_ip_num)
+				ban_key = models.Ban.get_key(ban_ip_num_str)
 
 				if delete:
 					post_id = int(post_id_str)
