@@ -66,3 +66,12 @@ else:
 	)
 
 jinja_environment.globals.update(GLOBAL_VARS)
+
+def urlencode_filter(s):
+	if type(s) == 'Markup':
+		s = s.unescape()
+	s = s.encode('utf8')
+	s = urllib.quote_plus(s)
+	return jinja2.Markup(s)
+
+jinja_environment.filters['urlencode'] = urlencode_filter

@@ -33,7 +33,7 @@
 							<li><a href="/admin/post/{{ post.key.id() }}/ban"><i class="icon-ban-circle"></i> Ban</a></li>
 							<li><a href="/admin/post/{{ post.key.id() }}/bandelete"><i class="icon-exclamation-sign"></i> Ban &amp; delete</a></li>
 							<li class="divider"></li>
-							<li><a>IP address: {{ post.ip_string }}</a></li>
+							<li><a href="/ip/{{ post.ip_string }}">IP address: {{ post.ip_string }}</a></li>
 						</ul>
 					</div>
 				{% endif %}

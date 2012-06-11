@@ -1,0 +1,12 @@
+{% if not pjax %}{% extends "base.html" %}{% else %}{% extends "base-pjax.html" %}{% endif %}
+
+{% from "imports/post.html" import post with context %}
+{% from "imports/forms.html" import post_form with context %}
+{% from "imports/banned.html" import banned_message with context %}
+
+{% block content %}
+	<div class="hero-unit">
+		<h1>Invalid IP address.</h1>
+		<p>The IP address you supplied (<strong>{{ ip }}</strong>) is invalid.</p>
+	</div>
+{% endblock %}

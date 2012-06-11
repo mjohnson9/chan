@@ -1,0 +1,47 @@
+{% if not pjax %}{% extends "base.html" %}{% else %}{% extends "base-pjax.html" %}{% endif %}
+
+{% block page_title %}chan - ip information{% endblock %}
+
+{% block content %}
+	<div class="hero-unit">
+		<h1>IP Information</h1>
+		<p>
+			<div class="alert alert-info">IP: <strong>{{ ip }}</strong> (IPv{{ ip.version }}) (<strong>{{ ip|int }}</strong>)</div>
+			{% if banned[0] %}
+				<div class="alert alert-error"><i class="icon-ban-circle icon-white"></i> Banned: <strong>{{ banned[1] }}</strong></div>
+			{% else %}
+				<a class="btn btn-small btn-danger" href="/admin/ban?ip={{ ip }}">Ban</a><br/>
+			{% endif %}
+			{%- if ip.is_multicast -%}
+				<span class="label label-info">Multicast</span>&nbsp;
+			{%- endif -%}
+			{%- if ip.is_reserved -%}
+				<span class="label label-info">Reserved</span>&nbsp;
+			{%- endif -%}
+			{%- if ip.is_unspecified -%}
+				<span class="label label-info">Unspecified</span>&nbsp;
+			{%- endif -%}
+			{%- if ip.is_loopback -%}
+				<span class="label label-info">Loopback</span>&nbsp;
+			{%- endif -%}
+			{%- if ip.is_link_local -%}
+				<span class="label label-info">Link local</span>&nbsp;
+			{%- endif -%}
+			{%- if ip.is_private -%}
+				<span class="label label-info">Private</span>&nbsp;
+			{%- endif -%}
+			{%- if ip.version == 6 -%}
+				{%- if ip.ipv4_mapped -%}
+					<span class="label label-info">IPv4 mapped: <strong>{{ ip.ipv4_mapped }}</strong></span>&nbsp;
+				{%- endif -%}
+				{%- if ip.teredo -%}
+					<span class="label label-info">Teredo server: <strong>{{ ip.teredo[0] }}</strong></span>&nbsp;
+					<span class="label label-info">Teredo client: <strong>{{ ip.teredo[1] }}</strong></span>&nbsp;
+				{%- endif -%}
+				{%- if ip.sixtofour -%}
+					<span class="label label-info">6to4: <strong>{{ ip.sixtofour }}</strong></span>&nbsp;
+				{%- endif -%}
+			{%- endif -%}
+		</p>
+	</div>
+{% endblock %}

@@ -147,6 +147,34 @@ class IndexPage(BaseHandler):
 		else:
 			self.render_response('index.html', threads=index_threads_rpc.get_result(), db_writes_enabled=db_writes_enabled)
 
+class IPPage(BaseHandler):
+	@ndb.toplevel
+	def get(self, ip_recv):
+		is_admin = users.is_current_user_admin()
+
+		if is_admin:
+			try:
+				ip_to_send = int(ip_recv)
+			except ValueError:
+				ip_to_send = str(ip_recv)
+
+			try:
+				ip = ipaddr.IPAddress(ip_to_send)
+			except (ipaddr.AddressValueError, ValueError):
+				self.render_response("ipaddr-invalid.html", ip=ip_recv)
+			else:
+				user_ban_rpc = self.user_is_banned_async(ip)
+
+				self.render_response("ipaddr.html", banned=user_ban_rpc.get_result(), ip=ip)
+		else:
+			current_user = users.get_current_user()
+
+			if current_user:
+				self.abort(403)
+			else:
+				self.redirect('/login')
+
+
 class PostPage(BaseHandler):
 	@ndb.toplevel
 	def get(self, post_id_str):
@@ -206,7 +234,8 @@ class BanPage(BaseHandler):
 					else:
 						self.display_page(errors=['Post does not exist.'], delete=delete)
 			else:
-				self.display_page(delete=delete)
+				ban_ip = self.request.GET.get('ip', '')
+				self.display_page(delete=delete, ip=ban_ip)
 		else:
 			current_user = users.get_current_user()
 
@@ -220,7 +249,7 @@ class BanPage(BaseHandler):
 		is_admin = users.is_current_user_admin()
 
 		if is_admin:
-			delete = (delete is not None)
+			delete = (delete is not None and delete != "")
 
 			errors = []
 
