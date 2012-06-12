@@ -1,4 +1,4 @@
-(function() {
+$(function() {
 	$('a:not([data-no-pjax])').pjax('#main-content');
 
 	var loading_message_timeout;
@@ -21,7 +21,7 @@
 	}).live("pjax:end", function() {
 		hide_loading_message();
 	});
-})();
+});
 
 function change_selected_tab(name) {
 	$(".navbar .nav .active[data-nav-name]").removeClass("active");

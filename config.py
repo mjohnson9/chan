@@ -4,6 +4,8 @@ from datetime import timedelta
 from google.appengine.api import capabilities
 import jinja2
 
+MIXPANEL_API_KEY = "136b8dd37612f44384a87565c3d7de36"
+
 def humanize_bytes(bytes, precision=1): # It's kind of dumb, but I couldn't put this in utils.py because it would cause a circular dependency
 	abbrevs = (
 		(1<<50L, 'PB'),

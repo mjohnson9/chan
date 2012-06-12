@@ -1,7 +1,9 @@
-import logging
 import cgi
-import re
 from datetime import datetime, timedelta
+import logging
+import re
+import time
+import uuid
 
 import webapp2
 from google.appengine.ext.ndb import blobstore
@@ -11,11 +13,12 @@ from google.appengine.api import users
 from google.appengine.api import memcache
 from google.appengine.api import images
 
-import models
-import config
-import utils
 import admin
+import config
 import ipaddr
+import mixpanel
+import models
+import utils
 
 
 class HandlerUtils(object):
@@ -25,6 +28,14 @@ class HandlerUtils(object):
 		super(HandlerUtils, self).__init__(*args, **kwargs)
 		self._is_banned = None
 		self._ban_reason = None
+
+		self.check_uuid()
+
+	def check_uuid(self):
+		self.current_uuid = self.request.cookies.get('mixpanel-uuid', None)
+		if self.current_uuid is None:
+			self.current_uuid = str(uuid.uuid4())
+			self.response.set_cookie('mixpanel-uuid', self.current_uuid)
 
 	@ndb.tasklet
 	def user_is_banned_async(self, ip=None):
@@ -82,6 +93,29 @@ class HandlerUtils(object):
 
 		template = config.jinja_environment.get_template(_template)
 		self.response.write(template.render(context))
+
+	@ndb.tasklet
+	def mixpanel_track_async(self, event, properties=None):
+		if properties is None:
+			properties = {}
+
+		if "ip" not in properties:
+			properties["ip"] = str(self.user_ip)
+
+		if "time" not in properties:
+			properties["time"] = time.time()
+
+		if "mp_name_tag" not in properties:
+			current_user = users.get_current_user()
+			if current_user:
+				properties['mp_name_tag'] = current_user.nickname()
+
+		if "distinct_id" not in properties:
+			properties["distinct_id"] = self.current_uuid
+
+		result = yield mixpanel.track_async(event, properties)
+
+		raise ndb.Return(result)
 
 class BaseHandler(HandlerUtils, webapp2.RequestHandler):
 	pass
@@ -434,9 +468,11 @@ class NewThreadPage(BaseUploadHandler):
 
 				post.put()
 
+				track_rpc = self.mixpanel_track_async("New thread", {"Post number": post_id, "mp_note": "User made thread #%s." % post_id})
+
 				self.redirect('/post/%s#%s' % (post_id, post_id))
 
-				delete_rpc.wait()
+				ndb.Future.wait_all([delete_rpc, track_rpc])
 			else:
 				index_threads_rpc = models.Post.get_index_page_async()
 				delete_rpc = self._delete_files_async()
@@ -587,10 +623,14 @@ class NewPostPage(BaseUploadHandler):
 					else:
 						post.put()
 
+					track_rpc = self.mixpanel_track_async("New thread", {"Post number": post_id, "mp_note": "User made post #%s." % post_id})
+
 					self.redirect('/post/%s#%s' % (main_post_key.id(), post_id))
 
 					if delete_rpc:
-						delete_rpc.wait()
+						ndb.Future.wait_all([delete_rpc, track_rpc])
+					else:
+						track_rpc.wait()
 				else:
 					child_posts_rpc = models.Post.get_child_posts_async(main_post_key)
 					delete_rpc = self._delete_files_async()

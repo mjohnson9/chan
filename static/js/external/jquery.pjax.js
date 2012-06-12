@@ -229,7 +229,10 @@ var pjax = $.pjax = function( options ) {
 
 		// Google Analytics support
 		if ( (options.replace || options.push) && window._gaq )
-			_gaq.push(['_trackPageview'])
+			window._gaq.push(['_trackPageview'])
+
+		if ( (options.replace || options.push) && window.mixpanel )
+			window.mixpanel.track_pageview();
 
 		// If the URL has a hash in it, make sure the browser
 		// knows to navigate to the hash.
